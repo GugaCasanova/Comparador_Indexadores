@@ -179,45 +179,41 @@ def obter_dados_fipezap(data_inicial, data_final):
         
         url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data/fipezap.csv"
         
-        # Tenta ler diretamente com pandas
-        try:
-            df = pd.read_csv(url, encoding='utf-8')
-        except Exception as e:
-            print(f"Erro na primeira tentativa: {e}")
-            # Segunda tentativa usando requests
-            response = requests.get(url)
-            if response.status_code != 200:
-                print(f"Erro HTTP: {response.status_code}")
-                return []
-                
-            content = response.content.decode('utf-8').strip()
-            if not content:
-                print("Conteúdo vazio recebido")
-                return []
-                
-            print(f"Conteúdo recebido ({len(content)} bytes)")
-            print(f"Primeiras linhas:\n{content[:200]}")
-            
-            from io import StringIO
-            df = pd.read_csv(StringIO(content))
+        # Faz a requisição com timeout e verifica o status
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         
-        # Verifica se o DataFrame foi carregado corretamente
-        if df.empty:
-            print("DataFrame vazio")
+        content = response.text
+        if not content.strip():
+            print("URL retornou conteúdo vazio")
             return []
             
-        print(f"Colunas encontradas: {df.columns.tolist()}")
-        print(f"Número de linhas: {len(df)}")
+        # Verifica se o conteúdo parece ser um CSV válido
+        if ',' not in content and ';' not in content:
+            print("Conteúdo não parece ser um CSV válido")
+            print(f"Primeiros 100 caracteres: {content[:100]}")
+            return []
         
-        # Converte e processa os dados
+        # Tenta diferentes separadores e encodings
+        for sep in [',', ';']:
+            try:
+                df = pd.read_csv(StringIO(content), sep=sep)
+                if not df.empty:
+                    break
+            except:
+                continue
+        
+        if df.empty:
+            print("Não foi possível carregar dados válidos do CSV")
+            return []
+        
+        # Resto do processamento
         df['data'] = pd.to_datetime(df['data'])
         df = df.sort_values('data')
         
-        # Filtra pelo período
         mask = (df['data'] >= data_inicial) & (df['data'] <= data_final)
         df_filtrado = df.loc[mask]
         
-        # Converte para o formato esperado
         dados = []
         for _, row in df_filtrado.iterrows():
             dados.append({
@@ -225,13 +221,16 @@ def obter_dados_fipezap(data_inicial, data_final):
                 'valor': str(row['valor'])
             })
         
-        print(f"Dados processados: {len(dados)} registros")
+        print(f"Processados {len(dados)} registros do FipeZap")
         return dados
         
+    except requests.exceptions.RequestException as e:
+        print(f"Erro na requisição HTTP: {e}")
+        return []
     except Exception as e:
-        print(f"Erro ao buscar dados do FipeZap: {str(e)}")
+        print(f"Erro ao processar dados do FipeZap: {e}")
         import traceback
-        print(f"Traceback completo:\n{traceback.format_exc()}")
+        print(traceback.format_exc())
         return []
 
 def obter_dados_gasolina(data_inicial, data_final):
