@@ -7,6 +7,7 @@ from functools import lru_cache
 import yfinance as yf
 import time
 from bs4 import BeautifulSoup
+from io import StringIO
 
 app = Flask(__name__)
 
