@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de Indicadores</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="controls-container">
+            <div class="indicators-group">
+                <div class="select-group">
+                    <label for="indicador1">INDICADOR 1</label>
+                    <div class="indicator-control">
+                        <input type="checkbox" id="check1" checked>
+                        <select id="indicador1" name="indicador1">
+                            <option value="selic">SELIC</option>
+                            <option value="ipca">IPCA</option>
+                            <option value="cdi">CDI</option>
+                            <option value="igpm">IGPM</option>
+                            <option value="dolar">DÓLAR</option>
+                            <option value="ibov">IBOVESPA</option>
+                            <option value="cesta">CESTA BÁSICA</option>
+                            <option value="salario">SALÁRIO MÍNIMO</option>
+                            <option value="bigmac">BIG MAC</option>
+                            <option value="fipezap">FIPEZAP</option>
+                            <option value="gasolina">GASOLINA</option>
+                            <option value="energia">ENERGIA</option>
+                            <option value="aluguel">ALUGUEL</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="select-group">
+                    <label for="indicador2">INDICADOR 2</label>
+                    <div class="indicator-control">
+                        <input type="checkbox" id="check2" checked>
+                        <select id="indicador2" name="indicador2">
+                            <option value="selic">SELIC</option>
+                            <option value="ipca">IPCA</option>
+                            <option value="cdi">CDI</option>
+                            <option value="igpm">IGPM</option>
+                            <option value="dolar">DÓLAR</option>
+                            <option value="ibov">IBOVESPA</option>
+                            <option value="cesta">CESTA BÁSICA</option>
+                            <option value="salario">SALÁRIO MÍNIMO</option>
+                            <option value="bigmac">BIG MAC</option>
+                            <option value="fipezap">FIPEZAP</option>
+                            <option value="gasolina">GASOLINA</option>
+                            <option value="energia">ENERGIA</option>
+                            <option value="aluguel">ALUGUEL</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="period-group">
+                <label for="periodo">IN LAST</label>
+                <select id="periodo" name="periodo">
+                    <option value="12">1 year</option>
+                    <option value="24">2 years</option>
+                    <option value="36">3 years</option>
+                    <option value="60">5 years</option>
+                    <option value="120">10 years</option>
+                    <option value="240">20 years</option>
+                    <option value="600">50 years</option>
+                    <option value="0">all time</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="grafico"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,192 @@
+/* Importar fonte Inter do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #000000 0%, #0a1525 100%);
+    color: #ffffff;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #000000 0%, #0a1525 100%);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #333;
+    width: 100%;
+}
+
+.indicators-group {
+    display: flex;
+    gap: 30px;
+}
+
+.select-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.indicator-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #1a1a1a;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+/* Estilo para o primeiro indicador (azul) */
+.select-group:nth-child(1) .indicator-control {
+    background-color: rgba(77, 166, 255, 0.1);
+    border: 1px solid #4da6ff;
+}
+
+.select-group:nth-child(1) select {
+    background-color: rgba(77, 166, 255, 0.1);
+    border: 1px solid #4da6ff;
+    color: #4da6ff;
+}
+
+/* Estilo para o segundo indicador (verde) */
+.select-group:nth-child(2) .indicator-control {
+    background-color: rgba(80, 250, 123, 0.1);
+    border: 1px solid #50fa7b;
+}
+
+.select-group:nth-child(2) select {
+    background-color: rgba(80, 250, 123, 0.1);
+    border: 1px solid #50fa7b;
+    color: #50fa7b;
+}
+
+label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.select-group:nth-child(1) label {
+    color: #4da6ff;
+}
+
+.select-group:nth-child(2) label {
+    color: #50fa7b;
+}
+
+.period-group {
+    background: linear-gradient(135deg, #000000 0%, #0a1525 100%);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.period-group select {
+    background: linear-gradient(135deg, #000000 0%, #0a1525 100%);
+    color: #ffffff;
+    border: 1px solid #333;
+}
+
+.period-group label {
+    color: #ffffff;
+    display: block;
+    margin-bottom: 8px;
+}
+
+select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    outline: none;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+select option {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+select:hover {
+    border-color: #666666;
+}
+
+select:focus {
+    border-color: #808080;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #333;
+    cursor: pointer;
+}
+
+#grafico {
+    background: linear-gradient(135deg, #000000 0%, #0a1525 100%);
+    border-radius: 12px;
+    min-height: 600px;
+    padding: 20px;
+    border: 1px solid #333;
+    width: 100%;
+}
+
+/* Estilo para o loading e mensagens de erro */
+#loading,
+#error-message {
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+#error-message {
+    color: #ff4444;
+}
+
+/* Estilo para as opções do primeiro indicador (azul) */
+.select-group:nth-child(1) select option {
+    background-color: #000000;
+    /* Fundo preto */
+    color: #4da6ff;
+    /* Azul neon */
+    font-weight: 500;
+}
+
+/* Estilo para as opções do segundo indicador (verde) */
+.select-group:nth-child(2) select option {
+    background-color: #000000;
+    /* Fundo preto */
+    color: #50fa7b;
+    /* Verde neon */
+    font-weight: 500;
+}
+
+/* Remove o estilo padrão das opções */
+select option {
+    padding: 10px;
+}
