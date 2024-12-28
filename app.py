@@ -179,21 +179,37 @@ def obter_dados_fipezap(data_inicial, data_final):
         
         url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data/fipezap.csv"
         
-        # Adiciona verificação da resposta HTTP
-        response = requests.get(url)
-        response.raise_for_status()  # Levanta exceção para status codes ruins
+        # Tenta ler diretamente com pandas
+        try:
+            df = pd.read_csv(url, encoding='utf-8')
+        except Exception as e:
+            print(f"Erro na primeira tentativa: {e}")
+            # Segunda tentativa usando requests
+            response = requests.get(url)
+            if response.status_code != 200:
+                print(f"Erro HTTP: {response.status_code}")
+                return []
+                
+            content = response.content.decode('utf-8').strip()
+            if not content:
+                print("Conteúdo vazio recebido")
+                return []
+                
+            print(f"Conteúdo recebido ({len(content)} bytes)")
+            print(f"Primeiras linhas:\n{content[:200]}")
+            
+            from io import StringIO
+            df = pd.read_csv(StringIO(content))
         
-        print(f"Conteúdo recebido ({len(response.text)} bytes)")
-        print(f"Primeiros 100 caracteres: {response.text[:100]}")
+        # Verifica se o DataFrame foi carregado corretamente
+        if df.empty:
+            print("DataFrame vazio")
+            return []
+            
+        print(f"Colunas encontradas: {df.columns.tolist()}")
+        print(f"Número de linhas: {len(df)}")
         
-        # Lê o CSV usando um StringIO para debug
-        from io import StringIO
-        csv_data = StringIO(response.text)
-        df = pd.read_csv(csv_data)
-        
-        print(f"DataFrame carregado com sucesso. Shape: {df.shape}")
-        
-        # Resto do código continua igual
+        # Converte e processa os dados
         df['data'] = pd.to_datetime(df['data'])
         df = df.sort_values('data')
         
@@ -209,6 +225,7 @@ def obter_dados_fipezap(data_inicial, data_final):
                 'valor': str(row['valor'])
             })
         
+        print(f"Dados processados: {len(dados)} registros")
         return dados
         
     except Exception as e:
