@@ -175,12 +175,25 @@ def obter_dados_bigmac(data_inicial, data_final):
 
 def obter_dados_fipezap(data_inicial, data_final):
     try:
-        print(f"Buscando dados do FipeZap...")
+        print(f"Buscando dados do FipeZap para período {data_inicial} até {data_final}...")
         
         url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data/fipezap.csv"
         
-        # Lê o CSV
-        df = pd.read_csv(url)
+        # Adiciona verificação da resposta HTTP
+        response = requests.get(url)
+        response.raise_for_status()  # Levanta exceção para status codes ruins
+        
+        print(f"Conteúdo recebido ({len(response.text)} bytes)")
+        print(f"Primeiros 100 caracteres: {response.text[:100]}")
+        
+        # Lê o CSV usando um StringIO para debug
+        from io import StringIO
+        csv_data = StringIO(response.text)
+        df = pd.read_csv(csv_data)
+        
+        print(f"DataFrame carregado com sucesso. Shape: {df.shape}")
+        
+        # Resto do código continua igual
         df['data'] = pd.to_datetime(df['data'])
         df = df.sort_values('data')
         
@@ -196,15 +209,12 @@ def obter_dados_fipezap(data_inicial, data_final):
                 'valor': str(row['valor'])
             })
         
-        print(f"Dados obtidos: {len(dados)} registros")
-        if dados:
-            print(f"Período: de {dados[0]['data']} até {dados[-1]['data']}")
-            print(f"Valores: de R$ {float(dados[0]['valor']):.2f} até R$ {float(dados[-1]['valor']):.2f}")
-        
         return dados
         
     except Exception as e:
         print(f"Erro ao buscar dados do FipeZap: {str(e)}")
+        import traceback
+        print(f"Traceback completo:\n{traceback.format_exc()}")
         return []
 
 def obter_dados_gasolina(data_inicial, data_final):
