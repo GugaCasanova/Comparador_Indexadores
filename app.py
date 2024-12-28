@@ -236,18 +236,32 @@ def obter_dados_fipezap(data_inicial, data_final):
 
 def obter_dados_gasolina(data_inicial, data_final):
     try:
-        print(f"Buscando dados da gasolina...")
+        print(f"Buscando dados da gasolina para período {data_inicial} até {data_final}...")
         
+        # URL do arquivo CSV com dados da gasolina
         url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data/gasolina.csv"
         
+        # Faz a requisição com timeout
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        
+        content = response.text
+        if not content.strip():
+            print("URL retornou conteúdo vazio")
+            return []
+        
         # Lê o CSV
-        df = pd.read_csv(url)
+        df = pd.read_csv(StringIO(content))
         df['data'] = pd.to_datetime(df['data'])
         df = df.sort_values('data')
         
         # Filtra pelo período
         mask = (df['data'] >= data_inicial) & (df['data'] <= data_final)
         df_filtrado = df.loc[mask]
+        
+        if df_filtrado.empty:
+            print("Nenhum dado encontrado para o período especificado")
+            return []
         
         # Converte para o formato esperado
         dados = []
@@ -257,6 +271,7 @@ def obter_dados_gasolina(data_inicial, data_final):
                 'valor': str(row['valor'])
             })
         
+        print(f"Processados {len(dados)} registros da gasolina")
         return dados
         
     except Exception as e:
@@ -299,7 +314,7 @@ def processar_dados_indicador(indicador, periodo_str):
             
             return datas, valores
             
-        elif indicador in ['gasolina', 'energia', 'aluguel']:
+        elif indicador in ['energia', 'aluguel']:
             data_inicial_str = data_inicial.strftime('%d/%m/%Y')
             data_final_str = data_final.strftime('%d/%m/%Y')
             dados = obter_dados_bcb_cached(codigos_bcb[indicador], data_inicial_str, data_final_str)
