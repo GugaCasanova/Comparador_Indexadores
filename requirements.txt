@@ -6,3 +6,4 @@ python-dotenv>=0.19.0
 cachetools>=5.0.0
 beautifulsoup4==4.12.2
 yfinance
+openpyxl>=3.0.0

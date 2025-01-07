@@ -120,6 +120,9 @@ def atualizar_fipezap():
         print(f"Erro ao atualizar FipeZap: {e}")
 
 def atualizar_dados_energia():
+    """
+    Atualiza dados de energia da ANEEL
+    """
     try:
         print("Atualizando dados da energia...")
         
@@ -130,51 +133,87 @@ def atualizar_dados_energia():
         # Obtém a última data no arquivo
         ultima_data = df_atual['data'].max()
         
-        # Busca dados da ANEEL via API
-        url = "https://dadosabertos.aneel.gov.br/dataset/tarifas-residenciais"
+        # URL correta do dataset da ANEEL
+        url = "https://www.aneel.gov.br/dados/tarifas-residenciais/download"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         
-        # Faz a requisição para a página que contém o link do arquivo mais recente
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Encontra o link para o arquivo CSV mais recente
-        csv_link = None
-        for link in soup.find_all('a', href=True):
-            if 'csv' in link['href'].lower() and 'tarifas' in link['href'].lower():
-                csv_link = link['href']
-                break
+        try:
+            # Tenta baixar diretamente o arquivo mais recente
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            
+            # Salva temporariamente o arquivo
+            with open('temp_energia.csv', 'wb') as f:
+                f.write(response.content)
+            
+            # Lê o arquivo CSV
+            df_novo = pd.read_csv('temp_energia.csv', sep=';', decimal=',')
+            
+            # Remove o arquivo temporário
+            import os
+            os.remove('temp_energia.csv')
+            
+            # Processa as colunas
+            df_novo['data'] = pd.to_datetime(df_novo['Data Início Vigência'], format='%d/%m/%Y')
+            df_novo['valor'] = pd.to_numeric(df_novo['Tarifa Convencional B1'], errors='coerce')
+            
+            # Filtra apenas registros mais recentes
+            df_novo = df_novo[df_novo['data'] > ultima_data]
+            
+            if not df_novo.empty:
+                # Prepara os novos registros
+                novos_registros = df_novo[['data', 'valor']].copy()
                 
-        if not csv_link:
-            print("Não foi possível encontrar o arquivo CSV mais recente")
-            return
+                # Concatena com dados existentes
+                df_completo = pd.concat([df_atual, novos_registros])
+                
+                # Ordena e remove duplicatas
+                df_completo = df_completo.sort_values('data')
+                df_completo = df_completo.drop_duplicates(subset=['data'])
+                
+                # Salva o arquivo atualizado
+                df_completo.to_csv('data/energia.csv', index=False)
+                print(f"Adicionados {len(df_novo)} novos registros de energia")
+            else:
+                print("Nenhum dado novo de energia encontrado")
+                
+        except Exception as e:
+            print(f"Erro ao baixar arquivo da ANEEL: {e}")
+            print("Tentando método alternativo...")
             
-        # Baixa e processa o CSV mais recente
-        df_novo = pd.read_csv(csv_link)
-        df_novo['data'] = pd.to_datetime(df_novo['Data de Início de Vigência'])
-        df_novo['valor'] = pd.to_numeric(df_novo['Tarifa Residencial B1 (R$/kWh)'].str.replace(',', '.'))
-        
-        # Filtra apenas registros mais recentes que o último no arquivo atual
-        df_novo = df_novo[df_novo['data'] > ultima_data]
-        
-        if not df_novo.empty:
-            # Prepara os novos registros
-            novos_registros = df_novo[['data', 'valor']].copy()
+            # Método alternativo usando a API
+            api_url = "https://dadosabertos.aneel.gov.br/api/3/action/datastore_search"
+            params = {
+                'resource_id': '5e9f0d17-0245-4c93-8c0c-2c5b0bdc5014',
+                'limit': 5000,
+                'sort': 'PeriodoReferencia desc'
+            }
             
-            # Concatena com dados existentes
-            df_completo = pd.concat([df_atual, novos_registros])
+            response = requests.get(api_url, params=params)
+            response.raise_for_status()
+            dados = response.json()['result']['records']
             
-            # Ordena e remove duplicatas
-            df_completo = df_completo.sort_values('data')
-            df_completo = df_completo.drop_duplicates(subset=['data'])
+            novos_registros = []
+            for registro in dados:
+                data = pd.to_datetime(registro['PeriodoReferencia'])
+                if data > ultima_data:
+                    valor = float(registro['ValorTarifaResidencial'].replace(',', '.'))
+                    novos_registros.append({
+                        'data': data,
+                        'valor': valor
+                    })
             
-            # Salva o arquivo atualizado
-            df_completo.to_csv('data/energia.csv', index=False)
-            print(f"Adicionados {len(df_novo)} novos registros de energia")
-        else:
-            print("Nenhum dado novo de energia encontrado")
+            if novos_registros:
+                df_novos = pd.DataFrame(novos_registros)
+                df_completo = pd.concat([df_atual, df_novos])
+                df_completo = df_completo.sort_values('data')
+                df_completo = df_completo.drop_duplicates(subset=['data'])
+                df_completo.to_csv('data/energia.csv', index=False)
+                print(f"Adicionados {len(novos_registros)} novos registros de energia (método alternativo)")
+            else:
+                print("Nenhum dado novo de energia encontrado (método alternativo)")
             
     except Exception as e:
         print(f"Erro ao atualizar dados da energia: {e}")
