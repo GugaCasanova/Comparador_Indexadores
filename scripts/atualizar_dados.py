@@ -15,12 +15,21 @@ def verificar_arquivos():
             print(f"Arquivo {arquivo} não encontrado. Criando arquivo vazio...")
             pd.DataFrame(columns=['data', 'valor']).to_csv(caminho, index=False)
 
+def ajustar_data_ultimo_dia(df):
+    """Ajusta as datas para o último dia do mês"""
+    df['data'] = pd.to_datetime(df['data'])
+    df['data'] = df['data'].dt.to_period('M').dt.to_timestamp('M')
+    return df
+
 def atualizar_gasolina():
-    """
-    Atualiza dados da gasolina da ANP usando os relatórios semanais
-    """
+    """Atualiza dados da gasolina da ANP"""
     try:
         print("Atualizando dados da gasolina...")
+        
+        # Lê arquivo atual
+        df_atual = pd.read_csv('data/gasolina.csv')
+        df_atual = ajustar_data_ultimo_dia(df_atual)
+        ultima_data = df_atual['data'].max()
         
         # URL da API da ANP para preços de combustíveis
         url = "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/semanal/sao-paulo/serie-historica-sao-paulo"
@@ -34,13 +43,25 @@ def atualizar_gasolina():
         response.raise_for_status()
         
         # Processa os dados mais recentes
+        novos_dados = []
         # ... código para processar os dados ...
         
-        # Atualiza o arquivo CSV
-        df_final.to_csv('data/gasolina.csv', index=False)
+        # Atualiza o arquivo CSV se houver dados novos
+        if novos_dados:
+            df_novo = pd.DataFrame(novos_dados)
+            df_novo = ajustar_data_ultimo_dia(df_novo)
+            df_final = pd.concat([df_atual, df_novo])
+            df_final = df_final.sort_values('data')
+            df_final = df_final.drop_duplicates(subset=['data'])
+            df_final.to_csv('data/gasolina.csv', index=False)
+            print(f"Dados da gasolina atualizados: {len(novos_dados)} novos registros")
+        else:
+            print("Nenhum dado novo da gasolina encontrado")
+            df_final = df_atual  # Mantém os dados atuais se não houver novos
         
     except Exception as e:
         print(f"Erro ao atualizar dados da gasolina: {e}")
+        df_final = df_atual  # Em caso de erro, mantém os dados atuais
 
 def atualizar_fipezap():
     """
@@ -83,17 +104,13 @@ def atualizar_fipezap():
         print(f"Erro ao atualizar FipeZap: {e}")
 
 def atualizar_dados_energia():
-    """
-    Atualiza dados de energia da ANEEL
-    """
+    """Atualiza dados de energia da ANEEL"""
     try:
         print("Atualizando dados da energia...")
         
-        # Lê o arquivo atual
+        # Lê arquivo atual
         df_atual = pd.read_csv('data/energia.csv')
-        df_atual['data'] = pd.to_datetime(df_atual['data'])
-        
-        # Obtém a última data no arquivo
+        df_atual = ajustar_data_ultimo_dia(df_atual)
         ultima_data = df_atual['data'].max()
         
         # URL correta do dataset da ANEEL
@@ -184,7 +201,7 @@ def atualizar_dados_energia():
 
 def main():
     print(f"Iniciando atualização de dados: {datetime.now()}")
-    verificar_arquivos()  # Adiciona verificação de arquivos
+    verificar_arquivos()
     atualizar_gasolina()
     atualizar_fipezap()
     atualizar_dados_energia()

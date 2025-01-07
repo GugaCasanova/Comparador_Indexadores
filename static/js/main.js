@@ -91,11 +91,10 @@ function atualizarGrafico() {
                 throw new Error('Dados não disponíveis');
             }
 
-            // Converte as datas para objetos Date e ajusta para meio-dia UTC
+            // Converte as datas para objetos Date e ajusta para o primeiro dia do mês
             const dates = data.datas.map(d => {
                 const date = new Date(d);
-                date.setUTCHours(12);  // Define para meio-dia UTC para evitar problemas de timezone
-                return date;
+                return new Date(date.getFullYear(), date.getMonth(), 1);  // Primeiro dia do mês
             });
 
             // Configuração do primeiro indicador (azul)
@@ -181,8 +180,10 @@ function atualizarGrafico() {
                     tickfont: {
                         color: '#ffffff'
                     },
-                    tickformat: '%b %Y',  // Formato dos ticks do eixo X
-                    hoverformat: '%B/%Y'  // Formato do hover
+                    tickformat: '%b %Y',
+                    dtick: 'M1',  // Força exibição mensal
+                    hoverformat: '%B/%Y',
+                    showspikes: false
                 },
                 yaxis: {
                     title: data.indicador1,
@@ -215,20 +216,32 @@ function atualizarGrafico() {
                 },
                 hovermode: 'x unified',
                 hoverlabel: {
-                    bgcolor: '#282a36',
-                    bordercolor: '#282a36',
+                    bgcolor: 'rgba(40, 42, 54, 0.8)',
+                    bordercolor: 'rgba(40, 42, 54, 0)',
                     font: {
-                        color: '#f8f8f2'
-                    }
-                }
+                        color: '#f8f8f2',
+                        size: 13,
+                        family: 'Arial'
+                    },
+                    align: 'left'
+                },
+                hoverdistance: -1,
+                spikedistance: -1
             };
 
-            // Configurações do hover com efeito neon
-            [trace1, trace2].forEach(trace => {
-                trace.hovertemplate =
-                    '<b>%{x|%d/%m/%Y}</b><br>' +  // Formato brasileiro de data
-                    '%{y:.2f}<br>' +
-                    '<extra></extra>';
+            // Configuração do hover minimalista
+            [trace1, trace2].forEach((trace, index) => {
+                if (index === 0) {
+                    trace.x = dates;
+                    trace.hovertemplate =
+                        `${data.indicador1}: %{y:.2f}<br>` +
+                        '<extra></extra>';
+                } else {
+                    trace.x = dates;
+                    trace.hovertemplate =
+                        `${data.indicador2}: %{y:.2f}<br>` +
+                        '<extra></extra>';
+                }
             });
 
             Plotly.newPlot('grafico', [shadow1, trace1, shadow2, trace2], layout, {
