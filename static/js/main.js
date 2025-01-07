@@ -203,6 +203,21 @@ function atualizarGrafico() {
                     r: 60,
                     t: 80,
                     b: 50
+                },
+                options: {
+                    tooltips: {
+                        callbacks: {
+                            label: function (tooltipItem, data) {
+                                const dataset = data.datasets[tooltipItem.datasetIndex];
+                                const valor = dataset.data[tooltipItem.index];
+                                const indicador = dataset.label;
+                                return `${indicador}: ${formatarValor(indicador, valor)}`;
+                            },
+                            title: function (tooltipItems, data) {
+                                return formatarData(data.labels[tooltipItems[0].index]);
+                            }
+                        }
+                    }
                 }
             };
 
@@ -288,4 +303,17 @@ const cores = {
 function formatarValor(indicador, valor) {
     const formatador = formatadores[indicador] || formatadores.default;
     return formatador(valor);
+}
+
+// Função para formatar a data corretamente no tooltip
+function formatarData(data) {
+    // Converte a string da data para objeto Date
+    // Adiciona 1 dia para compensar o timezone
+    const dataObj = new Date(data + 'T00:00:00Z');
+    dataObj.setDate(dataObj.getDate() + 1);
+
+    // Formata para pt-BR
+    const mes = dataObj.toLocaleString('pt-BR', { month: 'long' });
+    const ano = dataObj.getFullYear();
+    return `${mes}/${ano}`;
 }
