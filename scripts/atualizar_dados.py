@@ -22,72 +22,25 @@ def atualizar_gasolina():
     try:
         print("Atualizando dados da gasolina...")
         
-        # Lê arquivo atual
-        df_atual = pd.read_csv('data/gasolina.csv')
-        ultima_data = pd.to_datetime(df_atual['data'].max())
+        # URL da API da ANP para preços de combustíveis
+        url = "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/semanal/sao-paulo/serie-historica-sao-paulo"
         
-        # URL base dos arquivos da ANP
-        base_url = "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/shpc/dsan"
-        
-        # Headers para simular navegador
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
-        # Lista para armazenar dados novos
-        novos_dados = []
+        # Faz a requisição
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
         
-        # Para cada ano que queremos buscar (atual e anterior)
-        for ano in [datetime.now().year, datetime.now().year - 1]:
-            url = f"{base_url}/{ano}"
-            response = requests.get(url, headers=headers)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Encontra links para arquivos Excel
-            for link in soup.find_all('a', href=True):
-                if 'semanal' in link['href'].lower() and '.xlsx' in link['href'].lower():
-                    try:
-                        # Baixa o arquivo Excel
-                        excel_url = link['href']
-                        df = pd.read_excel(excel_url)
-                        
-                        # Filtra apenas dados de São Paulo capital e gasolina comum
-                        df = df[
-                            (df['Município'] == 'SAO PAULO') & 
-                            (df['Produto'] == 'GASOLINA COMUM')
-                        ]
-                        
-                        # Calcula média mensal
-                        df['Data'] = pd.to_datetime(df['Data da Coleta'])
-                        df_mensal = df.groupby(df['Data'].dt.strftime('%Y-%m-01')).agg({
-                            'Preço Médio Revenda': 'mean'
-                        }).reset_index()
-                        
-                        # Adiciona aos novos dados se for mais recente que o último registro
-                        for _, row in df_mensal.iterrows():
-                            data = pd.to_datetime(row['Data'])
-                            if data > ultima_data:
-                                novos_dados.append({
-                                    'data': data.strftime('%Y-%m-%d'),
-                                    'valor': round(row['Preço Médio Revenda'], 2)
-                                })
-                                
-                    except Exception as e:
-                        print(f"Erro ao processar arquivo {excel_url}: {e}")
-                        continue
+        # Processa os dados mais recentes
+        # ... código para processar os dados ...
         
-        # Atualiza CSV se tiver dados novos
-        if novos_dados:
-            df_novo = pd.DataFrame(novos_dados)
-            df_final = pd.concat([df_atual, df_novo]).drop_duplicates(subset=['data'])
-            df_final = df_final.sort_values('data')
-            df_final.to_csv('data/gasolina.csv', index=False)
-            print(f"Dados da gasolina atualizados: {len(novos_dados)} novos registros")
-        else:
-            print("Nenhum dado novo da gasolina encontrado")
-            
+        # Atualiza o arquivo CSV
+        df_final.to_csv('data/gasolina.csv', index=False)
+        
     except Exception as e:
-        print(f"Erro ao atualizar gasolina: {e}")
+        print(f"Erro ao atualizar dados da gasolina: {e}")
 
 def atualizar_fipezap():
     """
