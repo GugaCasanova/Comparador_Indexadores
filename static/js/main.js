@@ -91,9 +91,16 @@ function atualizarGrafico() {
                 throw new Error('Dados não disponíveis');
             }
 
+            // Converte as datas para objetos Date e ajusta para meio-dia UTC
+            const dates = data.datas.map(d => {
+                const date = new Date(d);
+                date.setUTCHours(12);  // Define para meio-dia UTC para evitar problemas de timezone
+                return date;
+            });
+
             // Configuração do primeiro indicador (azul)
             const trace1 = {
-                x: data.datas,
+                x: dates,
                 y: data.valores1,
                 name: data.indicador1,
                 type: 'scatter',
@@ -108,7 +115,7 @@ function atualizarGrafico() {
 
             // Adiciona a sombra como uma segunda linha logo abaixo
             const shadow1 = {
-                x: data.datas,
+                x: dates,
                 y: data.valores1.map(v => v * 0.995),
                 name: data.indicador1 + '_shadow',
                 type: 'scatter',
@@ -126,7 +133,7 @@ function atualizarGrafico() {
 
             // Configuração do segundo indicador (verde)
             const trace2 = {
-                x: data.datas,
+                x: dates,
                 y: data.valores2,
                 name: data.indicador2,
                 type: 'scatter',
@@ -141,7 +148,7 @@ function atualizarGrafico() {
 
             // Adiciona a sombra como uma segunda linha logo abaixo
             const shadow2 = {
-                x: data.datas,
+                x: dates,
                 y: data.valores2.map(v => v * 0.995),
                 name: data.indicador2 + '_shadow',
                 type: 'scatter',
@@ -173,7 +180,9 @@ function atualizarGrafico() {
                     linecolor: '#333333',
                     tickfont: {
                         color: '#ffffff'
-                    }
+                    },
+                    tickformat: '%b %Y',  // Formato dos ticks do eixo X
+                    hoverformat: '%B/%Y'  // Formato do hover
                 },
                 yaxis: {
                     title: data.indicador1,
@@ -204,35 +213,22 @@ function atualizarGrafico() {
                     t: 80,
                     b: 50
                 },
-                options: {
-                    tooltips: {
-                        callbacks: {
-                            label: function (tooltipItem, data) {
-                                const dataset = data.datasets[tooltipItem.datasetIndex];
-                                const valor = dataset.data[tooltipItem.index];
-                                const indicador = dataset.label;
-                                return `${indicador}: ${formatarValor(indicador, valor)}`;
-                            },
-                            title: function (tooltipItems, data) {
-                                return formatarData(data.labels[tooltipItems[0].index]);
-                            }
-                        }
+                hovermode: 'x unified',
+                hoverlabel: {
+                    bgcolor: '#282a36',
+                    bordercolor: '#282a36',
+                    font: {
+                        color: '#f8f8f2'
                     }
                 }
             };
 
             // Configurações do hover com efeito neon
             [trace1, trace2].forEach(trace => {
-                trace.hoverlabel = {
-                    bgcolor: 'rgba(42, 47, 66, 0.9)',
-                    bordercolor: 'rgba(42, 47, 66, 0.9)',
-                    font: {
-                        color: '#ffffff',
-                        size: 12
-                    }
-                };
-                trace.hoverinfo = 'x+y';
-                trace.mode = 'lines';  // Apenas linhas para efeito mais limpo
+                trace.hovertemplate =
+                    '<b>%{x|%d/%m/%Y}</b><br>' +  // Formato brasileiro de data
+                    '%{y:.2f}<br>' +
+                    '<extra></extra>';
             });
 
             Plotly.newPlot('grafico', [shadow1, trace1, shadow2, trace2], layout, {
@@ -305,14 +301,9 @@ function formatarValor(indicador, valor) {
     return formatador(valor);
 }
 
-// Função para formatar a data corretamente no tooltip
+// Função para formatar a data corretamente
 function formatarData(data) {
-    // Converte a string da data para objeto Date
-    // Adiciona 1 dia para compensar o timezone
-    const dataObj = new Date(data + 'T00:00:00Z');
-    dataObj.setDate(dataObj.getDate() + 1);
-
-    // Formata para pt-BR
+    const dataObj = new Date(data);
     const mes = dataObj.toLocaleString('pt-BR', { month: 'long' });
     const ano = dataObj.getFullYear();
     return `${mes}/${ano}`;

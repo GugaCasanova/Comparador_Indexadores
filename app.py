@@ -351,6 +351,9 @@ def processar_dados_indicador(indicador, periodo_str):
             df = pd.read_csv(StringIO(response.text))
             df['data'] = pd.to_datetime(df['data'])
             
+            # Ajusta as datas para o último dia do mês
+            df['data'] = df['data'].apply(lambda x: x + pd.offsets.MonthEnd(0))
+            
             # Filtra pelo período
             mask = (df['data'] >= data_inicial) & (df['data'] <= data_final)
             df = df.loc[mask]
