@@ -265,3 +265,17 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('check1').addEventListener('change', atualizarGraficoDebounced);
     document.getElementById('check2').addEventListener('change', atualizarGraficoDebounced);
 });
+
+// No objeto de formatação de valores
+const formatadores = {
+    // ... outros formatadores ...
+    'energia': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/kWh`,
+    // ... resto dos formatadores ...
+};
+
+// No objeto de cores (se existir)
+const cores = {
+    // ... outras cores ...
+    'energia': '#4CAF50',  // Verde para energia
+    // ... resto das cores ...
+};

@@ -278,6 +278,50 @@ def obter_dados_gasolina(data_inicial, data_final):
         print(f"Erro ao buscar dados da Gasolina: {str(e)}")
         return []
 
+def obter_dados_energia(data_inicial, data_final):
+    try:
+        print(f"Buscando dados de energia para período {data_inicial} até {data_final}...")
+        
+        # URL do arquivo CSV com dados da energia
+        url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data/energia.csv"
+        
+        # Faz a requisição com timeout
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        
+        content = response.text
+        if not content.strip():
+            print("URL retornou conteúdo vazio")
+            return []
+        
+        # Lê o CSV
+        df = pd.read_csv(StringIO(content))
+        df['data'] = pd.to_datetime(df['data'])
+        df = df.sort_values('data')
+        
+        # Filtra pelo período
+        mask = (df['data'] >= data_inicial) & (df['data'] <= data_final)
+        df_filtrado = df.loc[mask]
+        
+        if df_filtrado.empty:
+            print("Nenhum dado encontrado para o período especificado")
+            return []
+        
+        # Converte para o formato esperado
+        dados = []
+        for _, row in df_filtrado.iterrows():
+            dados.append({
+                'data': row['data'].strftime('%d/%m/%Y'),
+                'valor': str(row['valor'])
+            })
+        
+        print(f"Processados {len(dados)} registros de energia")
+        return dados
+        
+    except Exception as e:
+        print(f"Erro ao buscar dados de Energia: {str(e)}")
+        return []
+
 def processar_dados_indicador(indicador, periodo_str):
     hoje = datetime.now()
     periodo = int(periodo_str)
@@ -312,6 +356,21 @@ def processar_dados_indicador(indicador, periodo_str):
             datas = df['data'].dt.strftime('%Y-%m-%d').tolist()
             valores = df['valor'].tolist()
             
+            return datas, valores
+            
+        elif indicador == 'gasolina':
+            dados = obter_dados_gasolina(data_inicial, data_final)
+            if not dados:
+                return [], []
+                
+            df = pd.DataFrame(dados)
+            df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
+            df['valor'] = pd.to_numeric(df['valor'], errors='coerce')
+            df = df.dropna()
+            df = df.sort_values('data')
+            
+            datas = df['data'].dt.strftime('%Y-%m-%d').tolist()
+            valores = df['valor'].tolist()
             return datas, valores
             
         elif indicador in ['energia', 'aluguel']:
