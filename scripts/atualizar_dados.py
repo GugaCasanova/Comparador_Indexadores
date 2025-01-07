@@ -131,32 +131,40 @@ def atualizar_dados_energia():
         ultima_data = df_atual['data'].max()
         
         # Busca dados da ANEEL via API
-        url = "https://dadosabertos.aneel.gov.br/api/3/action/datastore_search"
-        params = {
-            'resource_id': '5e9f0d17-0245-4c93-8c0c-2c5b0bdc5014',  # ID do recurso da tarifa residencial
-            'limit': 5000
+        url = "https://dadosabertos.aneel.gov.br/dataset/tarifas-residenciais"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
-        response = requests.get(url, params=params)
-        response.raise_for_status()
+        # Faz a requisição para a página que contém o link do arquivo mais recente
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
         
-        dados = response.json()['result']['records']
+        # Encontra o link para o arquivo CSV mais recente
+        csv_link = None
+        for link in soup.find_all('a', href=True):
+            if 'csv' in link['href'].lower() and 'tarifas' in link['href'].lower():
+                csv_link = link['href']
+                break
+                
+        if not csv_link:
+            print("Não foi possível encontrar o arquivo CSV mais recente")
+            return
+            
+        # Baixa e processa o CSV mais recente
+        df_novo = pd.read_csv(csv_link)
+        df_novo['data'] = pd.to_datetime(df_novo['Data de Início de Vigência'])
+        df_novo['valor'] = pd.to_numeric(df_novo['Tarifa Residencial B1 (R$/kWh)'].str.replace(',', '.'))
         
-        # Processa os novos dados
-        novos_registros = []
-        for registro in dados:
-            data = pd.to_datetime(registro['PeriodoReferencia'])
-            if data > ultima_data:
-                valor = float(registro['ValorTarifaResidencial'].replace(',', '.'))
-                novos_registros.append({
-                    'data': data,
-                    'valor': valor
-                })
+        # Filtra apenas registros mais recentes que o último no arquivo atual
+        df_novo = df_novo[df_novo['data'] > ultima_data]
         
-        if novos_registros:
-            # Adiciona novos registros ao DataFrame
-            df_novos = pd.DataFrame(novos_registros)
-            df_completo = pd.concat([df_atual, df_novos])
+        if not df_novo.empty:
+            # Prepara os novos registros
+            novos_registros = df_novo[['data', 'valor']].copy()
+            
+            # Concatena com dados existentes
+            df_completo = pd.concat([df_atual, novos_registros])
             
             # Ordena e remove duplicatas
             df_completo = df_completo.sort_values('data')
@@ -164,12 +172,14 @@ def atualizar_dados_energia():
             
             # Salva o arquivo atualizado
             df_completo.to_csv('data/energia.csv', index=False)
-            print(f"Adicionados {len(novos_registros)} novos registros de energia")
+            print(f"Adicionados {len(df_novo)} novos registros de energia")
         else:
             print("Nenhum dado novo de energia encontrado")
             
     except Exception as e:
         print(f"Erro ao atualizar dados da energia: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def main():
     print(f"Iniciando atualização de dados: {datetime.now()}")
