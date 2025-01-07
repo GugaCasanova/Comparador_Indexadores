@@ -119,10 +119,63 @@ def atualizar_fipezap():
     except Exception as e:
         print(f"Erro ao atualizar FipeZap: {e}")
 
+def atualizar_dados_energia():
+    try:
+        print("Atualizando dados da energia...")
+        
+        # Lê o arquivo atual
+        df_atual = pd.read_csv('data/energia.csv')
+        df_atual['data'] = pd.to_datetime(df_atual['data'])
+        
+        # Obtém a última data no arquivo
+        ultima_data = df_atual['data'].max()
+        
+        # Busca dados da ANEEL via API
+        url = "https://dadosabertos.aneel.gov.br/api/3/action/datastore_search"
+        params = {
+            'resource_id': '5e9f0d17-0245-4c93-8c0c-2c5b0bdc5014',  # ID do recurso da tarifa residencial
+            'limit': 5000
+        }
+        
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        
+        dados = response.json()['result']['records']
+        
+        # Processa os novos dados
+        novos_registros = []
+        for registro in dados:
+            data = pd.to_datetime(registro['PeriodoReferencia'])
+            if data > ultima_data:
+                valor = float(registro['ValorTarifaResidencial'].replace(',', '.'))
+                novos_registros.append({
+                    'data': data,
+                    'valor': valor
+                })
+        
+        if novos_registros:
+            # Adiciona novos registros ao DataFrame
+            df_novos = pd.DataFrame(novos_registros)
+            df_completo = pd.concat([df_atual, df_novos])
+            
+            # Ordena e remove duplicatas
+            df_completo = df_completo.sort_values('data')
+            df_completo = df_completo.drop_duplicates(subset=['data'])
+            
+            # Salva o arquivo atualizado
+            df_completo.to_csv('data/energia.csv', index=False)
+            print(f"Adicionados {len(novos_registros)} novos registros de energia")
+        else:
+            print("Nenhum dado novo de energia encontrado")
+            
+    except Exception as e:
+        print(f"Erro ao atualizar dados da energia: {e}")
+
 def main():
     print(f"Iniciando atualização de dados: {datetime.now()}")
     atualizar_gasolina()
     atualizar_fipezap()
+    atualizar_dados_energia()
     print("Atualização concluída!")
 
 if __name__ == "__main__":
