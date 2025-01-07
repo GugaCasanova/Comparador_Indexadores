@@ -4,6 +4,16 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import time
 import json
+import os
+
+def verificar_arquivos():
+    """Verifica se os arquivos CSV necessários existem"""
+    arquivos = ['energia.csv', 'cesta_basica.csv', 'gasolina.csv', 'fipezap.csv']
+    for arquivo in arquivos:
+        caminho = f'data/{arquivo}'
+        if not os.path.exists(caminho):
+            print(f"Arquivo {arquivo} não encontrado. Criando arquivo vazio...")
+            pd.DataFrame(columns=['data', 'valor']).to_csv(caminho, index=False)
 
 def atualizar_gasolina():
     """
@@ -152,7 +162,6 @@ def atualizar_dados_energia():
             df_novo = pd.read_csv('temp_energia.csv', sep=';', decimal=',')
             
             # Remove o arquivo temporário
-            import os
             os.remove('temp_energia.csv')
             
             # Processa as colunas
@@ -222,6 +231,7 @@ def atualizar_dados_energia():
 
 def main():
     print(f"Iniciando atualização de dados: {datetime.now()}")
+    verificar_arquivos()  # Adiciona verificação de arquivos
     atualizar_gasolina()
     atualizar_fipezap()
     atualizar_dados_energia()

@@ -266,16 +266,26 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('check2').addEventListener('change', atualizarGraficoDebounced);
 });
 
-// No objeto de formatação de valores
+// Formatadores para cada tipo de indicador
 const formatadores = {
-    // ... outros formatadores ...
     'energia': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/kWh`,
-    // ... resto dos formatadores ...
+    'cesta': (valor) => `R$ ${parseFloat(valor).toFixed(2)}`,
+    'gasolina': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/L`,
+    'aluguel': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/m²`,
+    'default': (valor) => `${parseFloat(valor).toFixed(2)}%`
 };
 
-// No objeto de cores (se existir)
+// Cores para cada indicador
 const cores = {
-    // ... outras cores ...
-    'energia': '#4CAF50',  // Verde para energia
-    // ... resto das cores ...
+    'energia': '#4CAF50',    // Verde
+    'cesta': '#FF9800',      // Laranja
+    'gasolina': '#E91E63',   // Rosa
+    'aluguel': '#9C27B0',    // Roxo
+    'default': '#2196F3'     // Azul
 };
+
+// Função para formatar o valor
+function formatarValor(indicador, valor) {
+    const formatador = formatadores[indicador] || formatadores.default;
+    return formatador(valor);
+}

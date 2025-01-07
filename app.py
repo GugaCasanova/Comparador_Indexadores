@@ -329,12 +329,26 @@ def processar_dados_indicador(indicador, periodo_str):
     data_final = hoje
     
     try:
-        if indicador == 'fipezap':
-            print(f"Processando FipeZap para período de {data_inicial} até {data_final}")
+        if indicador in ['energia', 'cesta', 'gasolina', 'fipezap']:
+            # Mapeia os nomes dos arquivos
+            arquivo_map = {
+                'energia': 'energia.csv',
+                'cesta': 'cesta_basica.csv',
+                'gasolina': 'gasolina.csv',
+                'fipezap': 'fipezap.csv'
+            }
             
-            # Lê direto do CSV
-            url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data/fipezap.csv"
-            df = pd.read_csv(url)
+            # URL base do GitHub
+            base_url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data"
+            arquivo = arquivo_map[indicador]
+            url = f"{base_url}/{arquivo}"
+            
+            # Faz a requisição
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            
+            # Lê o CSV da resposta
+            df = pd.read_csv(StringIO(response.text))
             df['data'] = pd.to_datetime(df['data'])
             
             # Filtra pelo período
@@ -342,15 +356,15 @@ def processar_dados_indicador(indicador, periodo_str):
             df = df.loc[mask]
             
             if df.empty:
-                print("Nenhum dado do FipeZap encontrado para o período")
+                print(f"Nenhum dado de {indicador} encontrado para o período")
                 return [], []
             
             # Ordena por data
             df = df.sort_values('data')
             
-            print(f"Encontrados {len(df)} registros do FipeZap")
-            print(f"Primeiro registro: {df['data'].iloc[0]} - R$ {df['valor'].iloc[0]}")
-            print(f"Último registro: {df['data'].iloc[-1]} - R$ {df['valor'].iloc[-1]}")
+            print(f"Processando {indicador}: {len(df)} registros encontrados")
+            print(f"Período: de {df['data'].min()} até {df['data'].max()}")
+            print(f"Valores: de {df['valor'].min():.2f} até {df['valor'].max():.2f}")
             
             # Converte para o formato esperado
             datas = df['data'].dt.strftime('%Y-%m-%d').tolist()
@@ -358,22 +372,7 @@ def processar_dados_indicador(indicador, periodo_str):
             
             return datas, valores
             
-        elif indicador == 'gasolina':
-            dados = obter_dados_gasolina(data_inicial, data_final)
-            if not dados:
-                return [], []
-                
-            df = pd.DataFrame(dados)
-            df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
-            df['valor'] = pd.to_numeric(df['valor'], errors='coerce')
-            df = df.dropna()
-            df = df.sort_values('data')
-            
-            datas = df['data'].dt.strftime('%Y-%m-%d').tolist()
-            valores = df['valor'].tolist()
-            return datas, valores
-            
-        elif indicador in ['energia', 'aluguel']:
+        elif indicador == 'aluguel':
             data_inicial_str = data_inicial.strftime('%d/%m/%Y')
             data_final_str = data_final.strftime('%d/%m/%Y')
             dados = obter_dados_bcb_cached(codigos_bcb[indicador], data_inicial_str, data_final_str)
@@ -385,15 +384,6 @@ def processar_dados_indicador(indicador, periodo_str):
             df = pd.DataFrame(dados)
             df['data'] = pd.to_datetime(df['data'], format='%d/%m/%Y')
             df['valor'] = pd.to_numeric(df['valor'].str.replace(',', '.'), errors='coerce')
-            
-            # Tratamentos específicos
-            if indicador == 'aluguel':
-                df['valor'] = df['valor'] * 10  # Converte para R$
-            elif indicador == 'energia':
-                df['valor'] = df['valor'] / 100  # Converte para R$/kWh
-            elif indicador == 'gasolina':
-                df['valor'] = df['valor']  # Já está em R$/litro
-                
             df = df.dropna()
             df = df.sort_values('data')
             
