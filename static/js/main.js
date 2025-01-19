@@ -296,7 +296,8 @@ const formatadores = {
     'cesta': (valor) => `R$ ${parseFloat(valor).toFixed(2)}`,
     'gasolina': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/L`,
     'aluguel': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/m²`,
-    'default': (valor) => `${parseFloat(valor).toFixed(2)}%`
+    'default': (valor) => `${parseFloat(valor).toFixed(2)}%`,
+    'plano_saude': (valor) => `R$ ${parseFloat(valor).toFixed(2)}`,
 };
 
 // Cores para cada indicador
@@ -305,7 +306,8 @@ const cores = {
     'cesta': '#FF9800',      // Laranja
     'gasolina': '#E91E63',   // Rosa
     'aluguel': '#9C27B0',    // Roxo
-    'default': '#2196F3'     // Azul
+    'default': '#2196F3',     // Azul
+    'plano_saude': '#8B4513',  // Marrom
 };
 
 // Função para formatar o valor

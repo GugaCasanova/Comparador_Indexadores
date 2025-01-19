@@ -23,6 +23,7 @@ codigos_bcb = {
     'gasolina': 32848, # Preço médio gasolina - São Paulo
     'energia': 28752,  # Tarifa média energia residencial - São Paulo
     'aluguel': 28140,  # Índice FipeZap - Aluguel - São Paulo
+    'plano_saude': 'plano_saude.csv',  # Arquivo local com dados da ANS
 }
 
 def retry_request(func, retries=3, delay=1):
@@ -329,13 +330,14 @@ def processar_dados_indicador(indicador, periodo_str):
     data_final = hoje
     
     try:
-        if indicador in ['energia', 'cesta', 'gasolina', 'fipezap']:
+        if indicador in ['energia', 'cesta', 'gasolina', 'fipezap', 'plano_saude']:
             # Mapeia os nomes dos arquivos
             arquivo_map = {
                 'energia': 'energia.csv',
                 'cesta': 'cesta_basica.csv',
                 'gasolina': 'gasolina.csv',
-                'fipezap': 'fipezap.csv'
+                'fipezap': 'fipezap.csv',
+                'plano_saude': 'plano_saude.csv'
             }
             
             # URL base do GitHub
