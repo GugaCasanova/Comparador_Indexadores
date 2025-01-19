@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import time
 import json
 import os
+from atualizar_plano_saude import atualizar_plano_saude
 
 def verificar_arquivos():
     """Verifica se os arquivos CSV necessários existem"""
@@ -205,6 +206,7 @@ def main():
     atualizar_gasolina()
     atualizar_fipezap()
     atualizar_dados_energia()
+    atualizar_plano_saude()
     print("Atualização concluída!")
 
 if __name__ == "__main__":

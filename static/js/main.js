@@ -297,7 +297,7 @@ const formatadores = {
     'gasolina': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/L`,
     'aluguel': (valor) => `R$ ${parseFloat(valor).toFixed(2)}/m²`,
     'default': (valor) => `${parseFloat(valor).toFixed(2)}%`,
-    'plano_saude': (valor) => `R$ ${parseFloat(valor).toFixed(2)}`,
+    'plano_saude': (valor) => `${parseFloat(valor).toFixed(2)}%`,
 };
 
 // Cores para cada indicador

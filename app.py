@@ -23,7 +23,7 @@ codigos_bcb = {
     'gasolina': 32848, # Preço médio gasolina - São Paulo
     'energia': 28752,  # Tarifa média energia residencial - São Paulo
     'aluguel': 28140,  # Índice FipeZap - Aluguel - São Paulo
-    'plano_saude': 'plano_saude.csv',  # Arquivo local com dados da ANS
+    'plano_saude': 'https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data/plano_saude.csv',  # CSV no GitHub
 }
 
 def retry_request(func, retries=3, delay=1):
@@ -340,17 +340,15 @@ def processar_dados_indicador(indicador, periodo_str):
                 'plano_saude': 'plano_saude.csv'
             }
             
-            # URL base do GitHub
-            base_url = "https://raw.githubusercontent.com/GugaCasanova/Comparador_Indexadores/main/data"
-            arquivo = arquivo_map[indicador]
-            url = f"{base_url}/{arquivo}"
+            # Se for plano_saude, usa URL completa do GitHub
+            arquivo = codigos_bcb[indicador] if indicador == 'plano_saude' else arquivo_map[indicador]
             
-            # Faz a requisição
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
+            # Lê o CSV (local ou do GitHub)
+            if indicador == 'plano_saude':
+                df = pd.read_csv(arquivo)
+            else:
+                df = pd.read_csv(f'data/{arquivo}')
             
-            # Lê o CSV da resposta
-            df = pd.read_csv(StringIO(response.text))
             df['data'] = pd.to_datetime(df['data'])
             
             # Ajusta as datas para o último dia do mês
